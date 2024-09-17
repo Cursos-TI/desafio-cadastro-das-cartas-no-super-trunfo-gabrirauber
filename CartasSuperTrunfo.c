@@ -17,6 +17,7 @@ typedef struct
     float PIB;
     int PontosTuristicos;
 } CartasCidade; 
+
 //Definição da estutura de Estado
 typedef struct 
 {
@@ -29,19 +30,24 @@ typedef struct
     CartasEstados Estados[8];
 } CartasSuperTrunfo;
 
+//Estrutura de uma carta selecionada
+typedef struct 
+{
+    int indexEstadoSelecionado;
+    int indexCidadeSelecionada;    
+} CartaSelecionada;
+
 //Definição do constantes do enumerador de estado
 const char Estados[8] = {'A', 'B', 'C', 'D','E', 'F','G','H'};
-//Indeces de cadastro
+//Indices de cadastro
 int IndexCidade = 1;
 int IndexEstado = 0;
 //Variavel global de cartas
 CartasSuperTrunfo cartas;
 //Variavel global carta selecionada
-char primeiracartaselecionada[3];
-char segundacartaselecionada[3];
+CartaSelecionada primeiracartaselecionada;
+CartaSelecionada segundacartaselecionada;
 
-
-//Função de impressão de cartas
 
 //Funcao retorna dencidade populacional
 float RetornaDencidadePopulacional(int _IndexEstado, int _IndexCidade){
@@ -63,7 +69,7 @@ float RetornaRendaPerCapita(int _IndexEstado, int _IndexCidade){
         cartas.Estados[_IndexEstado].Cartas[_IndexCidade].Populacao;
 }
 
-
+//Função de impressão de carta
 void ImprimirCarta(int _IndexCidade, int _IndexEstado){
     printf("******************************\n");
     printf("Dados Carta: \n");
@@ -71,8 +77,8 @@ void ImprimirCarta(int _IndexCidade, int _IndexEstado){
     printf("Estado: %c \n",Estados[_IndexEstado]);
     printf("Cidade: %s \n", cartas.Estados[_IndexEstado].Cartas[_IndexCidade].Cidade);
     printf("população: %ld \n",cartas.Estados[_IndexEstado].Cartas[_IndexCidade].Populacao);
-    printf("Área: %.2lf \n",cartas.Estados[_IndexEstado].Cartas[_IndexCidade].Area);
-    printf("Densidade Populacional: %.2f \n", RetornaDencidadePopulacional(_IndexEstado, _IndexCidade));
+    printf("Área: %.2lf km² \n",cartas.Estados[_IndexEstado].Cartas[_IndexCidade].Area);
+    printf("Densidade Populacional: %.2f/km² \n", RetornaDencidadePopulacional(_IndexEstado, _IndexCidade));
     printf("PIB: %.2lf \n",cartas.Estados[_IndexEstado].Cartas[_IndexCidade].PIB);
     printf("PIB per Capita: %.2f \n", RetornaRendaPerCapita(_IndexEstado, _IndexCidade));
     printf("pontos turisticos: %d \n",cartas.Estados[_IndexEstado].Cartas[_IndexCidade].PontosTuristicos);      
@@ -129,7 +135,7 @@ void CadastrarCarta()
     scanf("%s", &cartas.Estados[IndexEstado].Cartas[IndexCidade].Cidade);
     printf("Digite a população: ");
     scanf("%ld", &cartas.Estados[IndexEstado].Cartas[IndexCidade].Populacao);
-    printf("Digite a Área: ");
+    printf("Digite a Área em km²: ");
     scanf("%f", &cartas.Estados[IndexEstado].Cartas[IndexCidade].Area);
     printf("Digite a PIB: ");
     scanf("%f", &cartas.Estados[IndexEstado].Cartas[IndexCidade].PIB);
@@ -150,12 +156,17 @@ void CadastrarCarta()
 void FazerCartaSelecionada(int NumeroCarta){    
     char selecao[3];
     printf("Digite o código da carta: \n");
-    scanf("%s",&selecao);
-    ImprimirCarta((int) selecao[2], RetornaIndiceEstado(selecao[0]));
-    if (NumeroCarta == 0)
-        strcpy(primeiracartaselecionada, selecao);
-    else    
-        strcpy(segundacartaselecionada, selecao);
+    scanf("%s",&selecao);    
+    ImprimirCarta((int) selecao[2] - '0', RetornaIndiceEstado(selecao[0]));
+    if (NumeroCarta == 0){
+        primeiracartaselecionada.indexEstadoSelecionado = RetornaIndiceEstado(selecao[0]);
+        primeiracartaselecionada.indexCidadeSelecionada = selecao[2] - '0';
+    }
+    else {        
+        segundacartaselecionada.indexEstadoSelecionado = RetornaIndiceEstado(selecao[0]);
+        segundacartaselecionada.indexCidadeSelecionada = selecao[2] - '0';
+    }    
+        
 } 
 
 //Chamada para selecionar o trunfo
@@ -174,7 +185,7 @@ int RetornaTrunfoSelecionado(){
     return selecao;
 } 
 
-
+//função que retorna o valor do super poder
 float RetornaSuperPoder(int _IndexEstado, int _IndexCidade){
     return cartas.Estados[_IndexEstado].Cartas[_IndexCidade].Populacao +
             cartas.Estados[_IndexEstado].Cartas[_IndexCidade].Area +
@@ -184,56 +195,57 @@ float RetornaSuperPoder(int _IndexEstado, int _IndexCidade){
             RetornaRendaPerCapita(_IndexEstado, _IndexCidade);             
 }
 
+//função de comparação de cartas
 int CompararCarta(){
     int trunfo;
     FazerCartaSelecionada(0);
     FazerCartaSelecionada(1);
     trunfo = RetornaTrunfoSelecionado();
     if (trunfo == 1){
-        if (cartas.Estados[RetornaIndiceEstado(primeiracartaselecionada[0])].Cartas[(int) primeiracartaselecionada[2]].Populacao >
-            cartas.Estados[RetornaIndiceEstado(segundacartaselecionada[0])].Cartas[(int) segundacartaselecionada[2]].Populacao)
+        if (cartas.Estados[primeiracartaselecionada.indexEstadoSelecionado].Cartas[primeiracartaselecionada.indexCidadeSelecionada].Populacao >
+            cartas.Estados[segundacartaselecionada.indexEstadoSelecionado].Cartas[segundacartaselecionada.indexCidadeSelecionada].Populacao)
             return 0;
         else
             return 1;
     }
     if (trunfo == 2){
-        if (cartas.Estados[RetornaIndiceEstado(primeiracartaselecionada[0])].Cartas[(int) primeiracartaselecionada[2]].Area >
-            cartas.Estados[RetornaIndiceEstado(segundacartaselecionada[0])].Cartas[(int) segundacartaselecionada[2]].Area)
+        if (cartas.Estados[primeiracartaselecionada.indexEstadoSelecionado].Cartas[primeiracartaselecionada.indexCidadeSelecionada].Area >
+            cartas.Estados[segundacartaselecionada.indexEstadoSelecionado].Cartas[segundacartaselecionada.indexCidadeSelecionada].Area)
             return 0;
         else
             return 1;
     }
     if (trunfo == 4){
-        if (cartas.Estados[RetornaIndiceEstado(primeiracartaselecionada[0])].Cartas[(int) primeiracartaselecionada[2]].PontosTuristicos >
-            cartas.Estados[RetornaIndiceEstado(segundacartaselecionada[0])].Cartas[(int) segundacartaselecionada[2]].PontosTuristicos)
+        if (cartas.Estados[primeiracartaselecionada.indexEstadoSelecionado].Cartas[primeiracartaselecionada.indexCidadeSelecionada].PontosTuristicos >
+            cartas.Estados[segundacartaselecionada.indexEstadoSelecionado].Cartas[segundacartaselecionada.indexCidadeSelecionada].PontosTuristicos)
             return 0;
         else
             return 1;
     }
     if (trunfo == 5){        
-        if (RetornaDencidadePopulacional(primeiracartaselecionada[0], (int) primeiracartaselecionada[2]) < 
-            RetornaDencidadePopulacional(segundacartaselecionada[0], (int) segundacartaselecionada[2]))
+        if (RetornaDencidadePopulacional(primeiracartaselecionada.indexEstadoSelecionado, primeiracartaselecionada.indexCidadeSelecionada) < 
+            RetornaDencidadePopulacional(segundacartaselecionada.indexEstadoSelecionado, segundacartaselecionada.indexCidadeSelecionada))
             return 0;
         else
             return 1;
     }
     if (trunfo == 6){        
-        if (RetornaRendaPerCapita(primeiracartaselecionada[0], (int) primeiracartaselecionada[2]) < 
-            RetornaRendaPerCapita(segundacartaselecionada[0], (int) segundacartaselecionada[2]))
+        if (RetornaRendaPerCapita(primeiracartaselecionada.indexEstadoSelecionado, primeiracartaselecionada.indexCidadeSelecionada) > 
+            RetornaRendaPerCapita(segundacartaselecionada.indexEstadoSelecionado, segundacartaselecionada.indexCidadeSelecionada))
             return 0;
         else
             return 1;
     }
     if (trunfo == 7){
-        if (RetornaSuperPoder(primeiracartaselecionada[0], (int) primeiracartaselecionada[2]) > 
-            RetornaSuperPoder(segundacartaselecionada[0], (int) segundacartaselecionada[2]))
+        if (RetornaSuperPoder(primeiracartaselecionada.indexEstadoSelecionado, primeiracartaselecionada.indexCidadeSelecionada) > 
+            RetornaSuperPoder(segundacartaselecionada.indexEstadoSelecionado, segundacartaselecionada.indexCidadeSelecionada))
             return 0;
         else
             return 1;
     }    
 }
 
-//Valida se pode cadastrar carta se o indice for menor que H então pode cadastrar mas se for igual valida se o indice da cidade é menor que 5
+//Valida se pode cadastrar carta se o indice for menor que H então pode cadastrar mas se for igual valida se o indice da cidade é menor que 4
 bool ValidaCadastrarCarta(){
     if (IndexEstado < 7)
         return true;
@@ -258,9 +270,9 @@ int main() {
         }
         else if (ControleMenu == 2){
             if (CompararCarta() == 0)
-                printf("Primeira Carta Ganhou!!!!");
+                printf("Primeira Carta Ganhou!!!!\n");
             else
-                printf("Segunda Carta Ganhou!!!!");
+                printf("Segunda Carta Ganhou!!!!\n");
         }
         else if (ControleMenu == 3)
             ImprimirCartas();
